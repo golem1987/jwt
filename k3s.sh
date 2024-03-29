@@ -1334,5 +1334,4 @@ eval set -- $(escape "${INSTALL_K3S_EXEC}") $(quote "$@")
         echo "Using default k3s CNI."
     fi
 
-    apply_traefik_patch
 }
