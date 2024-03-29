@@ -1258,45 +1258,6 @@ deploy_cilium_chart_with_encryption() {
    done
 }
 
-apply_traefik_patch(){
-    if [ "${INSTALL_K3S_VERSION}" = "v1.26.10+k3s1" ] &&  [ "$(hostnamectl|grep -o Flatcar)" != "Flatcar" ] && [ ${SYSTEM_NAME} != "k3s-agent" ] && [ ${SKIP_TRAEFIK_PATCH} != "true" ]; then
-        until  (kubectl get  clusterrole traefik-kube-system > /dev/null 2>&1); do
-            echo "Waiting for Traefik's clusterole to be created"
-            sleep 5
-        done
-
-        until (kubectl get clusterrole traefik-kube-system -o yaml | grep -q 'traefik-21.2.1_up21.2.0'); do
-            echo "Waiting for Traefik's clusterole to be updated"
-            sleep 5
-        done
-
-        echo "Applying Traefik patch"
-        kubectl patch clusterrole traefik-kube-system -n kube-system --type='json' -p='[{"op": "add", "path": "/rules/-1/apiGroups/-", "value": "traefik.io"}]'
-        kubectl apply -f https://assets.master.k3s.getvisibility.com/k3s/v1.26.10+k3s1/traefik-patch.yaml
-        kubectl rollout restart deployment traefik -n kube-system
-        echo "Traefik patch applied"
-    elif [ "${INSTALL_K3S_VERSION}" = "v1.26.10+k3s1" ] &&  [ "$(hostnamectl|grep -o Flatcar)" = "Flatcar" ] && [ ${SYSTEM_NAME} != "k3s-agent" ]; then
-        echo "Flatcar OS detected"
-        until  (/opt/bin/kubectl get  clusterrole traefik-kube-system > /dev/null 2>&1); do
-            echo "Waiting for Traefik's clusterole to be created"
-            sleep 5
-        done
-
-        until (/opt/bin/kubectl get clusterrole traefik-kube-system -o yaml | grep -q 'traefik-21.2.1_up21.2.0'); do
-            echo "Waiting for Traefik's clusterole to be updated"
-            sleep 5
-        done
-
-        echo "Applying Traefik patch"
-        /opt/bin/kubectl patch clusterrole traefik-kube-system -n kube-system --type='json' -p='[{"op": "add", "path": "/rules/-1/apiGroups/-", "value": "traefik.io"}]'
-        /opt/bin/kubectl apply -f https://assets.master.k3s.getvisibility.com/k3s/v1.26.10+k3s1/traefik-patch.yaml
-        /opt/bin/kubectl rollout restart deployment traefik -n kube-system
-        echo "Traefik patch applied"
-    else
-        echo ""
-    fi
-}
-
 
 # --- re-evaluate args to include env command ---
 eval set -- $(escape "${INSTALL_K3S_EXEC}") $(quote "$@")
